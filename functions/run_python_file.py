@@ -1,6 +1,31 @@
 import os
 import subprocess
 
+schema_run_python_file = {
+    "type": "function",
+    "function": {
+        "name": "run_python_file",
+        "description": "Runs a Python file in a specified file path, including optional arguments",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_path": {
+                    "type": "string",
+                    "description": "File path of target Python file to be run",
+                },
+                "args": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of optional arguments to be passed to the specified Python file to modify the execution (run)",
+                },
+            },
+            "required": ["file_path"]
+        },
+    },
+}
+
 
 def run_python_file(
     working_directory: str, file_path: str, args: list[str] | None = None
@@ -8,7 +33,7 @@ def run_python_file(
     try:
         # Input normalization
         working_dir_abs: str = os.path.abspath(working_directory)
-        file_path_abs:str = os.path.normpath(os.path.join(working_dir_abs, file_path))
+        file_path_abs: str = os.path.normpath(os.path.join(working_dir_abs, file_path))
         # Common error handling checks
         if os.path.commonpath([working_dir_abs, file_path_abs]) != working_dir_abs:
             return f'Error: Cannot execute "{file_path}" as it is outside the permitted working directory'
@@ -26,7 +51,7 @@ def run_python_file(
             timeout=30,
             check=True,
             capture_output=True,
-            text=True
+            text=True,
         )
         # Capture CompletedProcess object output values
         output: list[str] = []

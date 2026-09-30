@@ -1,9 +1,12 @@
 import argparse
+import json
 import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessage
 
+from call_function import available_functions, call_function
 from prompts import system_prompt
 
 
@@ -36,11 +39,21 @@ def generate_content(client: OpenAI, messages: list, verbose: bool) -> None:
     response = client.chat.completions.create(
         model="openrouter/free",
         messages=messages,
+        tools=available_functions,
         # temperature=0,
     )
     if not response.usage:
         raise RuntimeError("API response appears to be malformed")
 
+    message: ChatCompletionMessage = response.choices[0].message
+    if message.tool_calls:
+        for tool_call in message.tool_calls:
+            result_message = call_function(tool_call, verbose)
+            if not result_message.get('content'):
+                raise RuntimeError("Tool call result message has no content")
+            if verbose:
+                print(f"-> {result_message['content']}")
+            
     if verbose:
         print("Prompt tokens:", response.usage.prompt_tokens)
         print("Response tokens:", response.usage.completion_tokens)
